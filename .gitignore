@@ -1,0 +1,6 @@
+.vscode
+.k*
+.error
+lib/raisin.lua
+lib/sha.lua
+*_.lua
