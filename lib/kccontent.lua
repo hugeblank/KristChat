@@ -30,7 +30,7 @@ end
 local checkTX = function(tx)
     if tx and tx.to == nodes[node] and tx.metadata then -- Check it's for the node and has metadata
         tx.metadata = parseMeta(tx.metadata)
-        if tx.metadata.type == "test_post" and tx.metadata.content then
+        if tx.metadata.type == "post" and tx.metadata.content then
             -- Check that the meta is a compliant KChat message
             if node:find(".kst") and tx.metadata[1] == node then
                 -- If this is in the channel we want
@@ -76,7 +76,7 @@ end
 out.makePost = function(content, tid)
     if not (node and ws) then return false end
     content:gsub(";", "&semi")
-    return ws.makeTransaction(node, 1, {type="test_post", content=content, ref=tid}) -- RESET THIS BACK TO POST
+    return ws.makeTransaction(node, 1, {type="post", content=content, ref=tid}) -- RESET THIS BACK TO POST
 end
 
 out.setChannel = function(n)

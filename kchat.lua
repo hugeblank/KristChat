@@ -258,8 +258,9 @@ local function openChannel(node) -- Opens a kristchat channel
             end
             return msg.month.."/"..msg.day.."/"..msg.year
         end
-        msg.hour = msg.hour%24
-        out = out..(msg.hour%12)..":"..string.rep("0", #tostring(msg.min)%2)..msg.min
+        msg.hour = (msg.hour%24)%12
+        if msg.hour == 0 then msg.hour = 12 end
+        out = out..msg.hour..":"..string.rep("0", #tostring(msg.min)%2)..msg.min
         if msg.hour/12 >= 1 then
             out = out.." PM"
         else
@@ -1178,9 +1179,11 @@ do -- Border/Menu
                 end
                 if startOn then
                     addAccount(gsh-4, startOn)
-                else
+                elseif alternate then
                     accounts[alternate].current = true
                     addAccount(gsh-4, alternate)
+                else
+                    error("No channels to open, delete .kclogins")
                 end
                 file.close()
             end

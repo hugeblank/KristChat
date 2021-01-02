@@ -23,12 +23,10 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
+**Platform (please complete the following information):**
  - Platform: [e.g. CraftOS-PC / CC:Tweaked]
- - Platform Version [e.g. v2.5]
+ - Version [e.g. v2.5 / 1.16.4]
  - ComputerCraft Version: [e.g. 1.95.0]
-(If applicable)
- - MC Version: [e.g. 1.16.4]
 
 **Additional context**
 Add any other context about the problem here.
