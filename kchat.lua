@@ -522,10 +522,10 @@ local function openChannel(node) -- Opens a kristchat channel
                     targeted.select(false)
                     targeted = nil
                 end
-                for i = 1, #selectors do
+                for _, v in pairs(selectors) do
                     local _, sy = board.getPosition()
-                    local x, y = e[3]-offx+1, e[4]-offy-sy+1
-                    local id, select = selectors[i](x, y)
+                    local x, y = e[3]-offx+1, e[4]-offy-sy+2
+                    local id, select = v(x, y)
                     if oldid ~= id and id then
                         select(true)
                         targeted = {id=id,select=select}
