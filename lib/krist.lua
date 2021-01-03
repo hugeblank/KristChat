@@ -128,6 +128,7 @@ end
 
 out.getTransaction = function(tid)
     tid = tonumber(tid)
+    if not tid then return false end
 
     local out = getFromCache(tid)
     if out then

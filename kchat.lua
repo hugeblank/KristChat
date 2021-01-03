@@ -2,6 +2,7 @@
 -- A social media platform built on top of the Krist blockchain
 -- hugeblank, Jan 2021
 -- Some sections made live on Twitch, check out my channel here - https://twitch.tv/hugeblank
+-- Random comments in code are due to a redeem that viewers of my channel can claim
 
 --[[TODO
 - Context menu when right clicking on posts
@@ -68,7 +69,6 @@ local function cls()
 end
 
 -- Config setup
-local zone
 local config = {
     dark = false,
     timezone = "auto",
@@ -125,9 +125,8 @@ do
         term.setPaletteColor(colors.gray, 0x4B4B4B)
     end
 
-    zone = config.timezone
-    if zone == "auto" then
-        zone = (os.time(os.date("*t"))-os.time(os.date("!*t")))/60/60
+    if config.timezone == "auto" then
+        config.timezone = (os.time(os.date("*t"))-os.time(os.date("!*t")))/60/60
     end
 end
 
@@ -190,14 +189,28 @@ local function openChannel(node) -- Opens a kristchat channel
                 vis = b
             end
         end
+        local prevY = 1
+        board.shiftForInput = function(y)
+            if y ~= prevY then
+                prevY = y
+                offy = offy+(y-prevY)
+                temp.reposition(offx, offy)
+            end
+        end
     end
     -- Wrap the board window in another to keep it from overwriting the input bar
     local rendered, selectors, slim = {}, {}, 0 -- Current posts rendered, selection handlers for each message, scroll distance for post board
     local depths = {colors.red, colors.orange, colors.yellow, colors.lime, colors.lightBlue, colors.purple}
 
-    local function parseWrapping(str, lim) -- Function for line wrapping, returns the text in a table of rows, followed by the amount of rows
+    local function parseWrapping(str, lim) -- Function for line wrapping, returns the text in a table of rows
         local row, rowind = {""}, 1
         for word in str:gmatch("%S*") do
+            while #word >= lim-#row[rowind] do
+                row[rowind] = row[rowind]..word:sub(1, lim-1)
+                rowind = rowind+1
+                row[rowind] = ""
+                word = word:sub(lim, -1)
+            end
             if #row[rowind]+#word >= lim then
                 rowind = rowind+1
                 row[rowind] = ""
@@ -229,7 +242,7 @@ local function openChannel(node) -- Opens a kristchat channel
         end
         local out
         local daycheck = os.time(os.date("!*t"))-os.time(msg)
-        msg.hour = msg.hour+zone
+        msg.hour = msg.hour+config.timezone
         if daycheck < 86400 then
             out = "Today at "
         elseif daycheck > 86400 and daycheck < 86400*2 then
@@ -258,9 +271,10 @@ local function openChannel(node) -- Opens a kristchat channel
             end
             return msg.month.."/"..msg.day.."/"..msg.year
         end
-        msg.hour = (msg.hour%24)%12
-        if msg.hour == 0 then msg.hour = 12 end
-        out = out..msg.hour..":"..string.rep("0", #tostring(msg.min)%2)..msg.min
+        msg.hour = msg.hour%24
+        local twelvehour = msg.hour%12
+        if twelvehour == 0 then twelvehour = 12 end
+        out = out..twelvehour..":"..string.rep("0", #tostring(msg.min)%2)..msg.min
         if msg.hour/12 >= 1 then
             out = out.." PM"
         else
@@ -310,9 +324,10 @@ local function openChannel(node) -- Opens a kristchat channel
         local pcy = redrawText() -- Recurse into next post if there's a reference
         if post.metadata.ref and depth < 6 then
             local sp = kcontent.getPost(post.metadata.ref)
-            if not sp then error("Could not get post "..post.metadata.ref.." at depth "..depth) end
-            post.metadata.ref = sp
-            subpost = postDisplay(can, sp, depth+1, pcy)
+            if sp then
+                post.metadata.ref = sp
+                subpost = postDisplay(can, sp, depth+1, pcy)
+            end
         end
 
         do -- Base canvas movement API
@@ -710,7 +725,8 @@ local function openChannel(node) -- Opens a kristchat channel
                 end
                 rows = parseWrapping(table.concat(str, ""), bound)
                 local rowind = #rows
-                input.reposition(2, 1, gsw, 2+rowind)
+                input.reposition(2, 1, gsw-1, 2+rowind)
+                board.shiftForInput(rowind)
                 input.setBackgroundColor(colors.lightBlue)
                 input.clear()
                 local amtstr = tostring(#str).."/"..tostring(255-total)
