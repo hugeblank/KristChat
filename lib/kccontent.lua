@@ -75,7 +75,7 @@ end
 
 out.makePost = function(content, tid)
     if not (node and ws) then return false end
-    content:gsub(";", "&semi")
+    content = content:gsub(";", "&semi")
     return ws.makeTransaction(node, 1, {type="post", content=content, ref=tid}) -- RESET THIS BACK TO POST
 end
 

@@ -49,6 +49,7 @@ local eFilter = {
 }
 local gsw, gsh = term.getSize() -- Global width and height
 local accounts = {} -- Wallets logged in
+local user
 
 local ocolors = {}
 for i = 0, 15 do
@@ -294,7 +295,7 @@ local function openChannel(node) -- Opens a kristchat channel
 
         local function redrawText() -- Writes the text block
             local cx, cy = pcontent.getPosition()
-            local rows = parseWrapping(post.metadata.content, sx-1)
+            local rows = parseWrapping(post.metadata.content, sx-cx-2)
             pcrep(cx, cy, sx-1, #rows)
             local c
             c = {colors.white, colors.black}
@@ -473,6 +474,15 @@ local function openChannel(node) -- Opens a kristchat channel
     -- Posts received while app is running
     raisin.thread(function()
         local msgs = {}
+        local function renderMessages()
+            while #msgs > 0 do
+                postThread(table.remove(msgs, 1), true)
+                while not rendered[1].finalizePosition do
+                    sleep(.05)
+                end
+                rendered[1].finalizePosition(1)
+            end
+        end
 
         raisin.thread(function() -- Thread to do the injecty
             local e = {}
@@ -481,17 +491,12 @@ local function openChannel(node) -- Opens a kristchat channel
                 local banW, banH = banner.getSize()
                 if e[2] == 1 and e[3] >= banX and e[4] >= banY and e[3] < banX+banW and e[4] < banY+banH then
                     banner.setVisible(false)
-                    while #msgs > 0 do
-                        postThread(table.remove(msgs, 1), true)
-                        while not rendered[1].finalizePosition do
-                            sleep(.05)
-                        end
-                        rendered[1].finalizePosition(1)
-                    end
+                    renderMessages()
                 end
                 e = {os.pullEventRaw("mouse_click")}
             end
         end)
+
         while true do
             local msg = kcontent.receivePost()
             if not msg then
@@ -499,14 +504,18 @@ local function openChannel(node) -- Opens a kristchat channel
                 -- Wait for websocket
             else
                 msgs[#msgs+1] = msg
-                banner.clear()
-                local banw = banner.getSize()
-                banner.setVisible(true)
-                banner.clear()
-                local str = "Click to view "..#msgs.." new post"
-                if #msgs > 1 then str = str.."s" end
-                banner.setCursorPos((banw/2)-(#str/2), 2)
-                banner.write(str)
+                if msg.from == user then
+                    renderMessages()
+                else
+                    banner.clear()
+                    local banw = banner.getSize()
+                    banner.setVisible(true)
+                    banner.clear()
+                    local str = "Click to view "..#msgs.." new post"
+                    if #msgs > 1 then str = str.."s" end
+                    banner.setCursorPos((banw/2)-(#str/2), 2)
+                    banner.write(str)
+                end
             end
         end
     end, 0, eFilter)
@@ -1038,6 +1047,7 @@ do -- Border/Menu
                     sidebar.setCursorPos(4, y-aSlots[4])
                     sidebar.write(" Switching")
                     kcontent.login(index)
+                    user = index
                     cdrop = sdropdown(y-aSlots[4], list[index].channels, k, "Channels", changeChannel)
                     cdrop.setCurrent(k)
                 end
